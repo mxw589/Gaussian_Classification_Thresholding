@@ -47,8 +47,16 @@ public class Caller {
 		this.resultantImage = resultantImage;
 	}
 
+	public int getNeighbours() {
+		return neighbours;
+	}
+
 	public void call(){
-		Reader.read(this);
+		Reader reader = new Reader(this);
+		reader.read();
+		Classifier classifier = new Classifier(this);
+		classifier.calculateMeans();
+		
 	}
 	
 }

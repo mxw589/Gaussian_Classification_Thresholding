@@ -54,7 +54,7 @@ public class ThresholdingPlugin implements PlugIn{
 			
 			ImagePlus result = process(image, mask, neighbours);
 			
-			result.show();
+//			result.show();
 		}
 	}
 	
@@ -73,10 +73,10 @@ public class ThresholdingPlugin implements PlugIn{
 	public static void main(String[] args) {
 		new ImageJ();
 		
-//		ImagePlus image0 = IJ.openImage("/Users/Mark/Documents/Project/Test_Images/BMP/6_FITC-sample.tif");
-//	    image0.show();
-//	    ImagePlus image1 = IJ.openImage("/Users/Mark/Documents/Project/Images/6_FITC.tif");
-//	    image1.show();
+		ImagePlus image0 = IJ.openImage("/Users/Mark/Documents/Project/Test_Images/BMP/6_FITC-sample-8-bit.tif");
+	    image0.show();
+	    ImagePlus image1 = IJ.openImage("/Users/Mark/Documents/Project/Test_Images/BMP/6_FITC-sample-mask.tif");
+	    image1.show();
 	    IJ.runPlugIn("ThresholdingPlugin", "");
 	}
 

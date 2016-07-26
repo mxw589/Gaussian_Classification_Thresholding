@@ -38,14 +38,11 @@ public class Reader {
 	 * @param caller
 	 * @return
 	 */
-	public static void read(Caller caller){
-		ImageProcessor chosenImg = caller.getChosenImg().getProcessor();
-		ImageProcessor chosenMask = caller.getChosenMask().getProcessor();
+	public void read(){
+		int width = getCaller().IMAGE_WIDTH;
+		int height = getCaller().IMAGE_HEIGHT;
 
-		int width = caller.IMAGE_WIDTH;
-		int height = caller.IMAGE_HEIGHT;
-
-		if(width != chosenMask.getWidth() || height != chosenMask.getHeight()){
+		if(width != getChosenMask().getWidth() || height != getChosenMask().getHeight()){
 			throw new IllegalArgumentException("Image and mask don't have the same"
 					+ "dimensions");
 		}
@@ -59,8 +56,8 @@ public class Reader {
 		for(int heightP = 0; heightP < height; heightP++){
 			for(int widthP = 0; widthP < width; widthP++){
 
-				h = linearStretch(chosenImg.getf(widthP, heightP));
-				maskH = chosenMask.getf(widthP, heightP);
+				h = linearStretch(getChosenImg().getf(widthP, heightP));
+				maskH = getChosenMask().getf(widthP, heightP);
 
 				pixelPos = new PixelPos(widthP, heightP);
 				
@@ -71,12 +68,11 @@ public class Reader {
 				} else {
 					pixelsValues[widthP][heightP] = new PixelsValues(pixelPos, h, number, "foreground");
 				}
-
 				number++;
 			}
 		}
 		
-		caller.setReadImage(pixelsValues);
+		getCaller().setReadImage(pixelsValues);
 	}
 	
 	private static double linearStretch(double val){

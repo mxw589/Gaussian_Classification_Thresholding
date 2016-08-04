@@ -56,7 +56,13 @@ public class Caller {
 		reader.read();
 		Classifier classifier = new Classifier(this);
 		classifier.calculateMeans();
-		
+		classifier.calculateCovariance();
+//		for(int windowY = 0; windowY < getNeighbours(); windowY++){
+//			for(int windowX = 0; windowX < getNeighbours(); windowX++){
+//				classifier.PXGivenH(classifier.getFgMeans(), classifier.getFgCovariance(), test);
+//				classifier.PXGivenH(classifier.getBgMeans(), classifier.getBgCovariance(), test);
+//			}
+//		}
 	}
 	
 }

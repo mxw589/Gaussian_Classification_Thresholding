@@ -22,6 +22,10 @@ public class PixelsValues implements Comparable<PixelsValues>{
 		return value;
 	}
 
+	public void setValue(double value) {
+		this.value = value;
+	}
+
 	public PixelPos getPixelPos() {
 		return pixelPos;
 	}

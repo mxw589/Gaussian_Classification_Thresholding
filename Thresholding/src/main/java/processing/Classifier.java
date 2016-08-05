@@ -1,7 +1,11 @@
 package processing;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.LUDecomposition;
+import org.apache.commons.math3.linear.RealMatrix;
+
+import datatypes.PixelPos;
 import datatypes.PixelsValues;
-import org.apache.commons.math3.linear.*;
 
 public class Classifier {
 
@@ -10,6 +14,8 @@ public class Classifier {
 	private double[][] bgMeans;
 	private double[][] fgCovariance;
 	private double[][] bgCovariance;
+	private boolean validation;
+	private PixelPos valiPixel;
 	double bgCount;
 	double fgCount;
 	double borderCount;
@@ -18,6 +24,23 @@ public class Classifier {
 		this.caller = caller;
 		this.fgMeans = new double[caller.getNeighbours()][caller.getNeighbours()];
 		this.bgMeans = new double[caller.getNeighbours()][caller.getNeighbours()];
+		this.validation = false;
+	}
+	
+	/**
+	 * special classifier constructor for validation purposes. You are able to leave
+	 * the co-ordinate of a pixel that you want to leave out of the contruction of the
+	 * data set.
+	 * @param caller
+	 * @param x
+	 * @param y
+	 */
+	public Classifier(Caller caller, int x, int y){
+		this.caller = caller;
+		this.fgMeans = new double[caller.getNeighbours()][caller.getNeighbours()];
+		this.bgMeans = new double[caller.getNeighbours()][caller.getNeighbours()];
+		this.validation = true;
+		this.valiPixel = new PixelPos(x,y);
 	}
 
 	public double[][] getFgMeans() {
@@ -47,6 +70,14 @@ public class Classifier {
 	public Caller getCaller() {
 		return caller;
 	}
+	
+	public boolean isValidation() {
+		return validation;
+	}
+
+	public PixelPos getValiPixel() {
+		return valiPixel;
+	}
 
 	public void calculateMeans(){
 		PixelsValues[][] readImage = getCaller().getReadImage();
@@ -59,13 +90,15 @@ public class Classifier {
 
 		for(int heightP = 0 + step; heightP  < getCaller().IMAGE_HEIGHT - step; heightP ++){
 			for(int widthP = 0 + step; widthP < getCaller().IMAGE_WIDTH - step; widthP++){
-				if(readImage[widthP][heightP].getMaskVal().equals("foreground")){
-					fgCount++;
-					totalWindow(fgTotal, widthP, heightP);
-				} else if(readImage[widthP][heightP].getMaskVal().equals("background") ||
-						readImage[widthP][heightP].getMaskVal().equals("border")){
-					bgCount++;
-					totalWindow(bgTotal, widthP, heightP);
+				if(!isValidation() || heightP != getValiPixel().getY() || widthP != getValiPixel().getX()){
+					if(readImage[widthP][heightP].getMaskVal().equals("foreground")){
+						fgCount++;
+						totalWindow(fgTotal, widthP, heightP);
+					} else if(readImage[widthP][heightP].getMaskVal().equals("background") ||
+							readImage[widthP][heightP].getMaskVal().equals("border")){
+						bgCount++;
+						totalWindow(bgTotal, widthP, heightP);
+					}
 				}
 			}
 		}
@@ -153,16 +186,18 @@ public class Classifier {
 
 		for(int heightP = 0 + step; heightP  < getCaller().IMAGE_HEIGHT - step; heightP ++){
 			for(int widthP = 0 + step; widthP < getCaller().IMAGE_WIDTH - step; widthP++){
-				if(layer.equals("foreground")){
-					if(readImage[widthP][heightP].getMaskVal().equals("foreground")){
-						alterCoVar(eXY, widthP, heightP);
-						setCounter++;
-					}
-				} else if(layer.equals("background")){
-					if(readImage[widthP][heightP].getMaskVal().equals("background") ||
-							readImage[widthP][heightP].getMaskVal().equals("border")){
-						alterCoVar(eXY, widthP, heightP);
-						setCounter++;
+				if(!isValidation() || heightP != getValiPixel().getY() || widthP != getValiPixel().getX()){
+					if(layer.equals("foreground")){
+						if(readImage[widthP][heightP].getMaskVal().equals("foreground")){
+							alterCoVar(eXY, widthP, heightP);
+							setCounter++;
+						}
+					} else if(layer.equals("background")){
+						if(readImage[widthP][heightP].getMaskVal().equals("background") ||
+								readImage[widthP][heightP].getMaskVal().equals("border")){
+							alterCoVar(eXY, widthP, heightP);
+							setCounter++;
+						}
 					}
 				}
 			}
@@ -242,15 +277,38 @@ public class Classifier {
 			}
 		}
 		RealMatrix meanCVec = new Array2DRowRealMatrix(meanRow);
-		System.out.println(meanCVec);
+//		System.out.println(meanCVec);
 		
 		RealMatrix valCVec = new Array2DRowRealMatrix(val);
-		System.out.println(valCVec);
+//		System.out.println(valCVec);
 		
 		RealMatrix valMinusMean = valCVec.subtract(meanCVec);
-		System.out.println(valMinusMean);
+//		System.out.println(valMinusMean);
 		
 		return (1/Math.sqrt(Math.pow(2*Math.PI, nSq)*covarDet)) * Math.exp(-0.5 * (valMinusMean.transpose().multiply(convarInv)).multiply(valMinusMean).getEntry(0, 0));
+	}
+	
+	public double predictedClass(double[] val){
+		double pClass;
+		
+		double pForeground = PXGivenH(fgMeans, fgCovariance, val);
+		double pBackground = PXGivenH(bgMeans, bgCovariance, val);
+		
+		double totalCount = fgCount + bgCount + borderCount;
+		
+		double pFG = fgCount/totalCount;
+		double pBG = (bgCount + borderCount)/totalCount;
+		
+		double fgFinal = pForeground * pFG;
+		double bgFinal = pBackground * pBG;
+		
+		if(fgFinal > bgFinal){
+			pClass = fgFinal;
+		} else {
+			pClass = bgFinal;
+		}
+		
+		return pClass;
 	}
 
 }

@@ -42,24 +42,26 @@ public class ThresholdingPlugin implements PlugIn{
 		 */
 		GenericDialog gd = new GenericDialog("Watershed");
 		
-		gd.addChoice("Image", imgNames, imgNames[0]);
-		gd.addChoice("Mask", imgNames, imgNames[1]);
+		gd.addChoice("Image to build classifier", imgNames, imgNames[0]);
+		gd.addChoice("Mask to build classifier", imgNames, imgNames[1]);
+		gd.addChoice("Image to threshold", imgNames, imgNames[1]);
 		gd.addNumericField("Neighbour grid size", 3, 1);
 		gd.showDialog();
 		
 		if(gd.wasOKed()){
 			ImagePlus image = WindowManager.getImage(gd.getNextChoiceIndex()+1);
 			ImagePlus mask = WindowManager.getImage(gd.getNextChoiceIndex()+1);
+			ImagePlus tbcImg = WindowManager.getImage(gd.getNextChoiceIndex()+1);
 			int neighbours = (int) gd.getNextNumber();
 			
-			ImagePlus result = process(image, mask, neighbours);
+			ImagePlus result = process(image, mask, tbcImg, neighbours);
 			
 //			result.show();
 		}
 	}
 	
-	public ImagePlus process(ImagePlus image, ImagePlus mask, int neighbours){
-		Caller caller = new Caller(image, mask, neighbours);
+	public ImagePlus process(ImagePlus image, ImagePlus mask, ImagePlus TBCImg, int neighbours){
+		Caller caller = new Caller(image, mask, TBCImg, neighbours);
 		
 		caller.call();
 		
@@ -77,6 +79,7 @@ public class ThresholdingPlugin implements PlugIn{
 	    image0.show();
 	    ImagePlus image1 = IJ.openImage("/Users/Mark/Documents/Project/Test_Images/BMP/6_FITC-sample-mask.tif");
 	    image1.show();
+	    
 	    IJ.runPlugIn("ThresholdingPlugin", "");
 	}
 

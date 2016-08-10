@@ -145,6 +145,14 @@ public class Classifier {
 			}
 		}
 		
+//		//Debugging
+//		for(int windowY = 0; windowY < nSq; windowY++){
+//			for(int windowX = 0; windowX < nSq; windowX++){
+//				System.out.print(fgCov[windowX][windowY] + ",");
+//			}
+//			System.out.println();
+//		}
+		
 		setFgCovariance(fgCov);
 		setBgCovariance(bgCov);
 	}
@@ -255,6 +263,14 @@ public class Classifier {
 		for(int windowY = 0; windowY < getCaller().getNeighbours(); windowY++){
 			for(int windowX = 0; windowX < getCaller().getNeighbours(); windowX++){
 				totals[windowX][windowY] += readImage[x + windowX - adjust][y + windowY - adjust].getValue();
+				
+//				//Debugging
+//				if(windowY ==0 && windowX == 0){
+//					System.out.println("TL:" + readImage[x + windowX - adjust][y + windowY - adjust].getValue());
+//				}
+//				if(windowY ==0 && windowX == 1){
+//					System.out.println("TM:" + readImage[x + windowX - adjust][y + windowY - adjust].getValue());
+//				}
 			}
 		}
 	}
@@ -303,9 +319,9 @@ public class Classifier {
 		double bgFinal = pBackground * pBG;
 		
 		if(fgFinal > bgFinal){
-			pClass = fgFinal;
+			pClass = 1;
 		} else {
-			pClass = bgFinal;
+			pClass = 0;
 		}
 		
 		return pClass;

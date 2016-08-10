@@ -36,7 +36,7 @@ public class Reader {
 	 * @param caller
 	 * @return
 	 */
-	public void read(){
+	public void readClassifier(){
 		int width = getCaller().IMAGE_WIDTH;
 		int height = getCaller().IMAGE_HEIGHT;
 
@@ -107,12 +107,44 @@ public class Reader {
 		
 	}
 	
-	private static double linearStretch(double val){
-		return (val - DIMMEST_PIXEL) * (255.0 / (BRIGHTEST_PIXEL - DIMMEST_PIXEL));
+	public void readTBCImage(){
+		int width = getCaller().TBC_IMAGE_WIDTH;
+		int height = getCaller().TBC_IMAGE_HEIGHT;
+
+		double[][] pixelsValues = new double[width][height];
+		double h;
+		double brightest = -1;
+		double darkest = -1;
+
+		for(int heightP = 0; heightP < height; heightP++){
+			for(int widthP = 0; widthP < width; widthP++){
+				h = getChosenImg().getf(widthP, heightP);
+				if(brightest == -1 || brightest < h){
+					brightest = h;
+				}
+				
+				if(darkest == -1 || darkest > h){
+					darkest = h;
+				}
+				
+				pixelsValues[widthP][heightP] = h;
+			}
+		}
+		
+		DIMMEST_PIXEL = darkest;
+		BRIGHTEST_PIXEL = brightest;
+		
+		for(int heightP = 0; heightP < height; heightP++){
+			for(int widthP = 0; widthP < width; widthP++){
+				pixelsValues[widthP][heightP] = linearStretch(pixelsValues[widthP][heightP]);
+			}
+		}
+		
+		getCaller().setTBCImage(pixelsValues);
 	}
 	
-	private void validate(){
-		
+	private static double linearStretch(double val){
+		return (val - DIMMEST_PIXEL) * (255.0 / (BRIGHTEST_PIXEL - DIMMEST_PIXEL));
 	}
 
 }

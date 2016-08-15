@@ -16,6 +16,12 @@ public class Classifier {
 	private double[][] bgCovariance;
 	private boolean validation;
 	private PixelPos valiPixel;
+	private RealMatrix fgMeanCVec;
+	private RealMatrix fgCovarInv;
+	private double fgCovarDet;
+	private RealMatrix bgMeanCVec;
+	private RealMatrix bgCovarInv;
+	private double bgCovarDet;
 	double bgCount;
 	double fgCount;
 	double borderCount;
@@ -77,6 +83,54 @@ public class Classifier {
 
 	public PixelPos getValiPixel() {
 		return valiPixel;
+	}
+
+	public RealMatrix getFgMeanCVec() {
+		return fgMeanCVec;
+	}
+
+	public void setFgMeanCVec(RealMatrix fgMeanCVec) {
+		this.fgMeanCVec = fgMeanCVec;
+	}
+
+	public RealMatrix getFgCovarInv() {
+		return fgCovarInv;
+	}
+
+	public void setFgCovarInv(RealMatrix fgCovarInv) {
+		this.fgCovarInv = fgCovarInv;
+	}
+
+	public double getFgCovarDet() {
+		return fgCovarDet;
+	}
+
+	public void setFgCovarDet(double fgCovarDet) {
+		this.fgCovarDet = fgCovarDet;
+	}
+
+	public RealMatrix getBgMeanCVec() {
+		return bgMeanCVec;
+	}
+
+	public void setBgMeanCVec(RealMatrix bgMeanCVec) {
+		this.bgMeanCVec = bgMeanCVec;
+	}
+
+	public RealMatrix getBgCovarInv() {
+		return bgCovarInv;
+	}
+
+	public void setBgCovarInv(RealMatrix bgCovarInv) {
+		this.bgCovarInv = bgCovarInv;
+	}
+
+	public double getBgCovarDet() {
+		return bgCovarDet;
+	}
+
+	public void setBgCovarDet(double bgCovarDet) {
+		this.bgCovarDet = bgCovarDet;
 	}
 
 	public void calculateMeans(){
@@ -275,24 +329,51 @@ public class Classifier {
 		}
 	}
 	
-	public double PXGivenH(double[][] means, double [][] covar, double[] val){
+	public void calcDetInv(){
 		int nSq = getCaller().getNeighbours() * getCaller().getNeighbours();
-		RealMatrix covarMatrix = new Array2DRowRealMatrix(covar);
+		RealMatrix covarMatrix = new Array2DRowRealMatrix(getFgCovariance());
 		LUDecomposition ludecomp = new LUDecomposition(covarMatrix);
 //		System.out.println(covarMatrix.getColumnDimension() + ", " + covarMatrix.getRowDimension());
 //		System.out.println(covarMatrix);
 		double covarDet = ludecomp.getDeterminant();
+		setFgCovarDet(covarDet);
 //		System.out.println(covarDet);
-		RealMatrix convarInv = ludecomp.getSolver().getInverse();
-//		System.out.println(convarInv);
+		RealMatrix covarInv = ludecomp.getSolver().getInverse();
+		setFgCovarInv(covarInv);
+//		System.out.println(covarInv);
 		
 		double[] meanRow = new double[nSq];
 		for(int windowY = 0; windowY < getCaller().getNeighbours(); windowY++){
 			for(int windowX = 0; windowX < getCaller().getNeighbours(); windowX++){
-				meanRow[windowY * getCaller().getNeighbours() + windowX] = means[windowX][windowY];
+				meanRow[windowY * getCaller().getNeighbours() + windowX] = getFgMeans()[windowX][windowY];
 			}
 		}
 		RealMatrix meanCVec = new Array2DRowRealMatrix(meanRow);
+		setFgMeanCVec(meanCVec);
+		
+		covarMatrix = new Array2DRowRealMatrix(getBgCovariance());
+		ludecomp = new LUDecomposition(covarMatrix);
+//		System.out.println(covarMatrix.getColumnDimension() + ", " + covarMatrix.getRowDimension());
+//		System.out.println(covarMatrix);
+		covarDet = ludecomp.getDeterminant();
+		setBgCovarDet(covarDet);
+//		System.out.println(covarDet);
+		covarInv = ludecomp.getSolver().getInverse();
+		setBgCovarInv(covarInv);
+//		System.out.println(covarInv);
+		
+		meanRow = new double[nSq];
+		for(int windowY = 0; windowY < getCaller().getNeighbours(); windowY++){
+			for(int windowX = 0; windowX < getCaller().getNeighbours(); windowX++){
+				meanRow[windowY * getCaller().getNeighbours() + windowX] = getBgMeans()[windowX][windowY];
+			}
+		}
+		meanCVec = new Array2DRowRealMatrix(meanRow);
+		setBgMeanCVec(meanCVec);
+	}
+	
+	public double PXGivenH(RealMatrix meanCVec, RealMatrix covarInv, double covarDet, double[] val){
+		int nSq = getCaller().getNeighbours() * getCaller().getNeighbours();
 //		System.out.println(meanCVec);
 		
 		RealMatrix valCVec = new Array2DRowRealMatrix(val);
@@ -301,23 +382,28 @@ public class Classifier {
 		RealMatrix valMinusMean = valCVec.subtract(meanCVec);
 //		System.out.println(valMinusMean);
 		
-		return (1/Math.sqrt(Math.pow(2*Math.PI, nSq)*covarDet)) * Math.exp(-0.5 * (valMinusMean.transpose().multiply(convarInv)).multiply(valMinusMean).getEntry(0, 0));
+		return (1/Math.sqrt(Math.pow(2*Math.PI, nSq)*covarDet)) * Math.exp(-0.5 * (valMinusMean.transpose().multiply(covarInv)).multiply(valMinusMean).getEntry(0, 0));
 	}
 	
 	public double predictedClass(double[] val){
 		double pClass;
 		
-		double pForeground = PXGivenH(fgMeans, fgCovariance, val);
-		double pBackground = PXGivenH(bgMeans, bgCovariance, val);
+		double pForeground = PXGivenH(getFgMeanCVec(), getFgCovarInv(), getFgCovarDet(), val);
+		double pBackground = PXGivenH(getBgMeanCVec(), getBgCovarInv(), getBgCovarDet(), val);
+//		System.out.println("pBackground:"+pBackground);
 		
 		double totalCount = fgCount + bgCount + borderCount;
 		
 		double pFG = fgCount/totalCount;
 		double pBG = (bgCount + borderCount)/totalCount;
+//		System.out.println("pBG:"+pBG);
 		
 		double fgFinal = pForeground * pFG;
 		double bgFinal = pBackground * pBG;
 		
+		
+//		System.out.println("fgFinal: " + fgFinal);
+//		System.out.println("bgFinal: " + bgFinal);
 		if(fgFinal > bgFinal){
 			pClass = 1;
 		} else {

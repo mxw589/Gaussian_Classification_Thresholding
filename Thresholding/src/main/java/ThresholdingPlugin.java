@@ -44,7 +44,7 @@ public class ThresholdingPlugin implements PlugIn{
 		
 		gd.addChoice("Image to build classifier", imgNames, imgNames[0]);
 		gd.addChoice("Mask to build classifier", imgNames, imgNames[1]);
-		gd.addChoice("Image to threshold", imgNames, imgNames[1]);
+		gd.addChoice("Image to threshold", imgNames, imgNames[2]);
 		gd.addNumericField("Neighbour grid size", 3, 1);
 		gd.showDialog();
 		
@@ -79,6 +79,10 @@ public class ThresholdingPlugin implements PlugIn{
 	    image0.show();
 	    ImagePlus image1 = IJ.openImage("/Users/Mark/Documents/Project/Test_Images/BMP/6_FITC-sample-mask.tif");
 	    image1.show();
+	    ImagePlus image2 = IJ.openImage("/Users/Mark/Documents/Project/Images/6_FITC.tif");
+	    image2.show();
+	    ImagePlus image3 = IJ.openImage("/Users/Mark/Documents/Project/Test_Images/BMP/6_FITC-mask.tif");
+	    image3.show();
 	    
 	    IJ.runPlugIn("ThresholdingPlugin", "");
 	}

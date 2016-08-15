@@ -15,7 +15,12 @@ public class Caller {
 	public final int TBC_IMAGE_WIDTH;
 	public final int TBC_IMAGE_HEIGHT;
 	private double[][] TBCImage;
+	private double[][] TBCImageLinear;
 	private ImagePlus resultantImage;
+	private int windowXNumber;
+	private int windowYNumber;
+	private int windowWidth;
+	private int windowHeight;
 	
 	
 	
@@ -30,6 +35,18 @@ public class Caller {
 		
 		this.TBC_IMAGE_WIDTH = TBCImg.getWidth();
 		this.TBC_IMAGE_HEIGHT = TBCImg.getHeight();
+		
+		if(neighbours == 3){
+			this.windowXNumber = 10;
+			this.windowYNumber = 6;
+			this.windowWidth = 141;
+			this.windowHeight = 175;
+		} else if(neighbours == 5){
+			this.windowXNumber = 11;
+			this.windowYNumber = 7;
+			this.windowWidth = 130;
+			this.windowHeight = 152;
+		}
 	}
 
 	public ImagePlus getChosenImg() {
@@ -50,6 +67,14 @@ public class Caller {
 
 	public void setTBCImage(double[][] tBCImage) {
 		TBCImage = tBCImage;
+	}
+	
+	public double[][] getTBCImageLinear() {
+		return TBCImageLinear;
+	}
+
+	public void setTBCImageLinear(double[][] tBCImageLinear) {
+		TBCImageLinear = tBCImageLinear;
 	}
 
 	public PixelsValues[][] getReadImage() {
@@ -72,25 +97,72 @@ public class Caller {
 		return neighbours;
 	}
 	
+	public int getWindowXNumber() {
+		return windowXNumber;
+	}
+
+	public int getWindowYNumber() {
+		return windowYNumber;
+	}
+
+	public int getWindowWidth() {
+		return windowWidth;
+	}
+
+	public int getWindowHeight() {
+		return windowHeight;
+	}
+
 	public void call(){
 		Reader reader = new Reader(this);
 		reader.readClassifier();
 		reader.readTBCImage();
 		
+		System.out.println("Read");
+		
 		Classifier classifier = new Classifier(this);
 		classifier.calculateMeans();
+		System.out.println("Means done");
 		classifier.calculateCovariance();
+		System.out.println("Covar done");
+		classifier.calcDetInv();
+		System.out.println("Inverses and determinants done");
 		
 		int step = getNeighbours()/2;
+		
+		double[][] tbcLinear = new double[TBC_IMAGE_WIDTH][TBC_IMAGE_HEIGHT];
+		
+		setTBCImageLinear(tbcLinear);
+		
 		double[][] predClasses = new double[TBC_IMAGE_WIDTH][TBC_IMAGE_HEIGHT];
+		double[][] currWindow = new double[getWindowWidth()][getWindowHeight()];
+		
+		for(int xWindow = 0; xWindow < getWindowXNumber(); xWindow++){
+			for(int yWindow = 0; yWindow < getWindowYNumber(); yWindow++){
+				int windowXStart = windowStartPix(getWindowWidth(), xWindow);
+				int windowXEnd = windowEndPix(getWindowWidth(), xWindow);
+				
+				int windowYStart = windowStartPix(getWindowHeight(), yWindow);
+				int windowYEnd = windowEndPix(getWindowHeight(), yWindow);
+				
+				currWindow = windowVals(windowXStart,windowXEnd,windowYStart,windowYEnd);
+				
+				currWindow = linearStretchedWindow(currWindow, getWindowWidth(), getWindowHeight());
+				
+				updateTBC(getTBCImageLinear(), currWindow, windowXStart, windowXEnd, windowYStart, windowYEnd);
+			}
+		}
+		
+		System.out.println("Stretched image");
 		
 		for(int heightP = 0 + step; heightP  < TBC_IMAGE_HEIGHT - step; heightP ++){
 			for(int widthP = 0 + step; widthP < TBC_IMAGE_WIDTH - step; widthP++){
-				double[] val = getVal(getTBCImage(), widthP, heightP);
+				double[] val = getVal(getTBCImageLinear(), widthP, heightP);
 				predClasses[widthP][heightP] = classifier.predictedClass(val);
 			}
 		}
 		
+		System.out.println("Classified points");
 		setTBCImage(predClasses);
 		
 		ImageBuilder imageBuilder = new ImageBuilder(this, predClasses);
@@ -99,6 +171,48 @@ public class Caller {
 		getResultantImage().show();
 	}
 
+	private int windowStartPix(int length, int window){
+		return (length - (getNeighbours() - 1)) * window;
+	}
+	
+	private int windowEndPix(int length, int window){
+		return ((length - (getNeighbours() - 1)) * (window + 1)) + (getNeighbours() - 1);
+	}
+	
+	private double[][] windowVals(int xStart, int xEnd, int yStart, int yEnd){
+		double[][] currWindow = new double[getWindowWidth()][getWindowHeight()];
+		int currWinX = 0;
+		int currWinY = 0;
+
+		for(int y = yStart; y<yEnd; y++){
+			for(int x = xStart; x < xEnd; x++){
+				currWindow[currWinX][currWinY] = getTBCImage()[x][y];
+				currWinX++;
+			}
+			currWinX = 0;
+			currWinY++;
+		}
+		
+		return currWindow;
+	}
+	
+	private void updateTBC(double[][] tbc, double[][] currWindow, int xStart, int xEnd, int yStart, int yEnd){
+		int step = (getNeighbours() - 1)/2;
+		
+		int currWinX = step;
+		int currWinY = step;
+		
+		
+		for(int y = yStart + step; y < yEnd - step; y++){
+			for(int x = xStart + step; x < xEnd - step; x++){
+				tbc[x][y] = currWindow[currWinX][currWinY];
+				currWinX++;
+			}
+			currWinX = step;
+			currWinY++;
+		}
+	}
+	
 	public void callValidation(){
 		Reader reader = new Reader(this);
 		reader.readClassifier();
@@ -117,6 +231,7 @@ public class Caller {
 				Classifier classifier = new Classifier(this, widthP, heightP);
 				classifier.calculateMeans();
 				classifier.calculateCovariance();
+				classifier.calcDetInv();
 				
 				double[][] values = extractVals(getReadImage(), IMAGE_WIDTH, IMAGE_HEIGHT);
 				
@@ -183,4 +298,33 @@ public class Caller {
 		return retVal;
 	}
 	
+	private static double[][] linearStretchedWindow(double[][] windowVal, int width, int height){
+		double[][] returnValues = new double[width][height];
+		double brightest = -1;
+		double darkest = -1;
+		double h;
+
+		for(int heightP = 0; heightP < height; heightP++){
+			for(int widthP = 0; widthP < width; widthP++){
+				h = windowVal[widthP][heightP];
+				if(brightest == -1 || brightest < h){
+					brightest = h;
+				}
+				
+				if(darkest == -1 || darkest > h){
+					darkest = h;
+				}
+				
+				returnValues[widthP][heightP] = h;
+			}
+		}
+		
+		for(int heightP = 0; heightP < height; heightP++){
+			for(int widthP = 0; widthP < width; widthP++){
+				returnValues[widthP][heightP] = Reader.linearStretch(returnValues[widthP][heightP], darkest, brightest);
+			}
+		}
+		
+		return returnValues;
+	}
 }

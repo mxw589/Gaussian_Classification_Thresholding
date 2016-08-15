@@ -60,11 +60,10 @@ public class Reader {
 		for(int heightP = 0; heightP < height; heightP++){
 //			System.out.print("[");
 			for(int widthP = 0; widthP < width; widthP++){
-
-//				System.out.print(getChosenImg().getf(widthP, heightP) + ",");
-				
 				h = getChosenImg().getf(widthP, heightP);
 				maskH = getChosenMask().getf(widthP, heightP);
+				
+//				System.out.print(maskH + ",");
 				if(brightest == -1 || brightest < h){
 					brightest = h;
 				}
@@ -75,9 +74,9 @@ public class Reader {
 				
 				pixelPos = new PixelPos(widthP, heightP);
 				
-				if(maskH > 0 && maskH < 80){
+				if(maskH >= 0 && maskH < 80){
 					pixelsValues[widthP][heightP] = new PixelsValues(pixelPos, h, number, "background");
-				} else if(maskH > 81 && maskH < 160){
+				} else if(maskH >= 88 && maskH < 160){
 					pixelsValues[widthP][heightP] = new PixelsValues(pixelPos, h, number, "border");
 				} else {
 					pixelsValues[widthP][heightP] = new PixelsValues(pixelPos, h, number, "foreground");
@@ -98,7 +97,7 @@ public class Reader {
 //		for(int heightP = 0; heightP < height; heightP++){
 //			System.out.print("[");
 //			for(int widthP = 0; widthP < width; widthP++){
-//				System.out.print(pixelsValues[widthP][heightP].getValue() + ",");
+//				System.out.print(pixelsValues[widthP][heightP].getMaskVal() + ",");
 //			}
 //			System.out.println("]");
 //		}
@@ -120,34 +119,19 @@ public class Reader {
 		
 		double[][] pixelsValues = new double[width][height];
 		double h;
-		double brightest = -1;
-		double darkest = -1;
 
 		for(int heightP = 0; heightP < height; heightP++){
 			for(int widthP = 0; widthP < width; widthP++){
 				h = image.getf(widthP, heightP);
-				if(brightest == -1 || brightest < h){
-					brightest = h;
-				}
-				
-				if(darkest == -1 || darkest > h){
-					darkest = h;
-				}
 				
 				pixelsValues[widthP][heightP] = h;
-			}
-		}
-		
-		for(int heightP = 0; heightP < height; heightP++){
-			for(int widthP = 0; widthP < width; widthP++){
-				pixelsValues[widthP][heightP] = linearStretch(pixelsValues[widthP][heightP], darkest, brightest);
 			}
 		}
 		
 		return pixelsValues;
 	}
 	
-	private static double linearStretch(double val, double dimmest, double brightest){
+	public static double linearStretch(double val, double dimmest, double brightest){
 		return (val - dimmest) * (255.0 / (brightest - dimmest));
 	}
 

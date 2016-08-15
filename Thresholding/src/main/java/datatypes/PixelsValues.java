@@ -10,7 +10,6 @@ public class PixelsValues implements Comparable<PixelsValues>{
 	private PixelPos pixelPos;
 	private int number;
 	private String maskVal;
-	private int predVal;
 
 	public PixelsValues(PixelPos pixelPos, double value, int number, String maskVal){
 		this.value = value;
@@ -41,14 +40,6 @@ public class PixelsValues implements Comparable<PixelsValues>{
 
 	public void setMaskVal(String maskVal) {
 		this.maskVal = maskVal;
-	}
-	
-	public int getPredVal() {
-		return predVal;
-	}
-
-	public void setPredVal(int predVal) {
-		this.predVal = predVal;
 	}
 
 	/**

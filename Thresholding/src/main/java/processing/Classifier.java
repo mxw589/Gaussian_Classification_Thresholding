@@ -357,7 +357,7 @@ public class Classifier {
 //		System.out.println(covarMatrix);
 		covarDet = ludecomp.getDeterminant();
 		setBgCovarDet(covarDet);
-//		System.out.println(covarDet);
+//		System.out.println("BGcovarDet:" +covarDet);
 		covarInv = ludecomp.getSolver().getInverse();
 		setBgCovarInv(covarInv);
 //		System.out.println(covarInv);
@@ -374,15 +374,21 @@ public class Classifier {
 	
 	public double PXGivenH(RealMatrix meanCVec, RealMatrix covarInv, double covarDet, double[] val){
 		int nSq = getCaller().getNeighbours() * getCaller().getNeighbours();
-//		System.out.println(meanCVec);
+
 		
 		RealMatrix valCVec = new Array2DRowRealMatrix(val);
-//		System.out.println(valCVec);
+
 		
 		RealMatrix valMinusMean = valCVec.subtract(meanCVec);
-//		System.out.println(valMinusMean);
-		
-		return (1/Math.sqrt(Math.pow(2*Math.PI, nSq)*covarDet)) * Math.exp(-0.5 * (valMinusMean.transpose().multiply(covarInv)).multiply(valMinusMean).getEntry(0, 0));
+
+//		System.out.println("valCVec: "+valCVec);
+//		System.out.println("meanCVec: "+meanCVec);
+//		System.out.println("valMinusMean"+valMinusMean);
+//		System.out.println("covarInv:"+covarInv);
+//		System.out.println("covarDet:"+covarDet);
+//		System.out.println("first part:" + (1/Math.sqrt(Math.pow(2*Math.PI, nSq)*covarDet)));
+//		System.out.println("second part:" + (((valMinusMean.transpose()).multiply(covarInv)).multiply(valMinusMean).getEntry(0, 0)));
+		return (1/Math.sqrt(Math.pow(2*Math.PI, nSq)*covarDet)) * Math.exp(-0.5 * ((valMinusMean.transpose()).multiply(covarInv)).multiply(valMinusMean).getEntry(0, 0));
 	}
 	
 	public double predictedClass(double[] val){
@@ -390,12 +396,14 @@ public class Classifier {
 		
 		double pForeground = PXGivenH(getFgMeanCVec(), getFgCovarInv(), getFgCovarDet(), val);
 		double pBackground = PXGivenH(getBgMeanCVec(), getBgCovarInv(), getBgCovarDet(), val);
+//		System.out.println("pForeground:"+pForeground);
 //		System.out.println("pBackground:"+pBackground);
 		
 		double totalCount = fgCount + bgCount + borderCount;
 		
 		double pFG = fgCount/totalCount;
 		double pBG = (bgCount + borderCount)/totalCount;
+//		System.out.println("pFG:"+pFG);
 //		System.out.println("pBG:"+pBG);
 		
 		double fgFinal = pForeground * pFG;

@@ -45,7 +45,8 @@ public class ThresholdingPlugin implements PlugIn{
 		gd.addChoice("Image to build classifier", imgNames, imgNames[0]);
 		gd.addChoice("Mask to build classifier", imgNames, imgNames[1]);
 		gd.addChoice("Image to threshold", imgNames, imgNames[2]);
-		gd.addNumericField("Neighbour grid size", 3, 1);
+		gd.addNumericField("Neighbour grid size", 3, 0);
+		gd.addNumericField("Structuring element radius", 15, 0);
 		gd.showDialog();
 		
 		if(gd.wasOKed()){
@@ -53,15 +54,16 @@ public class ThresholdingPlugin implements PlugIn{
 			ImagePlus mask = WindowManager.getImage(gd.getNextChoiceIndex()+1);
 			ImagePlus tbcImg = WindowManager.getImage(gd.getNextChoiceIndex()+1);
 			int neighbours = (int) gd.getNextNumber();
+			int radius = (int) gd.getNextNumber();
 			
-			ImagePlus result = process(image, mask, tbcImg, neighbours);
+			ImagePlus result = process(image, mask, tbcImg, neighbours,radius);
 			
 //			result.show();
 		}
 	}
 	
-	public ImagePlus process(ImagePlus image, ImagePlus mask, ImagePlus TBCImg, int neighbours){
-		Caller caller = new Caller(image, mask, TBCImg, neighbours);
+	public ImagePlus process(ImagePlus image, ImagePlus mask, ImagePlus TBCImg, int neighbours,int radius){
+		Caller caller = new Caller(image, mask, TBCImg, neighbours,radius);
 		
 		caller.call();
 		
@@ -77,7 +79,7 @@ public class ThresholdingPlugin implements PlugIn{
 		
 		ImagePlus image0 = IJ.openImage("/Users/Mark/Documents/Project/Test_Images/BMP/6_FITC-sample-8-bit.tif");
 	    image0.show();
-	    ImagePlus image1 = IJ.openImage("/Users/Mark/Documents/Project/Test_Images/BMP/6_FITC-sample-mask.tif");
+	    ImagePlus image1 = IJ.openImage("/Users/Mark/Documents/Project/Images/5_ConA.tif");
 	    image1.show();
 	    ImagePlus image2 = IJ.openImage("/Users/Mark/Documents/Project/Images/6_FITC.tif");
 	    image2.show();

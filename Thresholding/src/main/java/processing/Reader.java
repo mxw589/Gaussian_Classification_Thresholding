@@ -54,8 +54,6 @@ public class Reader {
 		double h;
 		double maskH;
 		int number = 0;
-		double brightest = -1;
-		double darkest = -1;
 
 		for(int heightP = 0; heightP < height; heightP++){
 //			System.out.print("[");
@@ -64,13 +62,6 @@ public class Reader {
 				maskH = getChosenMask().getf(widthP, heightP);
 				
 //				System.out.print(maskH + ",");
-				if(brightest == -1 || brightest < h){
-					brightest = h;
-				}
-				
-				if(darkest == -1 || darkest > h){
-					darkest = h;
-				}
 				
 				pixelPos = new PixelPos(widthP, heightP);
 				
@@ -84,13 +75,6 @@ public class Reader {
 				number++;
 			}
 //			System.out.println("]");
-		}
-
-		
-		for(int heightP = 0; heightP < height; heightP++){
-			for(int widthP = 0; widthP < width; widthP++){
-				pixelsValues[widthP][heightP].setValue(linearStretch(pixelsValues[widthP][heightP].getValue(), darkest, brightest));
-			}
 		}
 		
 //		System.out.println("linearly scaled:");

@@ -11,16 +11,23 @@ public class Opening {
 		double[][] dilated = new double[width][height];
 		double[][] returnVals = new double[width][height];
 		
+		System.out.print("ero done: ");
 		for(int y = 0; y < height; y++){
 			for(int x = 0; x < width; x++){
 				dilated[x][y] = pixelErode(structuringElement, image, width, height, x, y);
 			}
-//			System.out.println("Row done: " + y);
+			if((y+1)%(height/10) == 0){
+				System.out.print("-");
+			}
 		}
-		
+		System.out.println();
+		System.out.print("dil done: ");
 		for(int y = 0; y < height; y++){
 			for(int x = 0; x < width; x++){
 				returnVals[x][y] = pixelDilate(structuringElement, dilated, width, height, x, y);
+			}
+			if((y+1)%(height/10) == 0){
+				System.out.print("-");
 			}
 		}
 		

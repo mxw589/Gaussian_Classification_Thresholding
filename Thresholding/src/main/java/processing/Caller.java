@@ -125,23 +125,79 @@ public class Caller {
 		reader.readClassifier();
 		reader.readTBCImage();
 		
-		System.out.println("Read");
+		System.out.println("Read images and masks");
 		
+		//----------REMOVING BRIGHT PIXELS----------//
+		double[][] classiImage = extractVals(getReadImage(), IMAGE_WIDTH, IMAGE_HEIGHT);
+		
+		System.out.println("Removing bright pixels from classifier image");
+		double[][] classiImageBriRem = BrightPixelRemover.removeBrightPixel(classiImage, IMAGE_WIDTH, IMAGE_HEIGHT);
+		
+		ImageBuilder imageBuilder0 = new ImageBuilder(this, classiImageBriRem, "briRem");
+		imageBuilder0.buildImage();
+		
+		getResultantImage().show();
+		System.out.println("DONE");
+		
+		System.out.println("Removing bright pixels from image to be classified");
+		double[][] tbcBriRem = BrightPixelRemover.removeBrightPixel(getTBCImage(), TBC_IMAGE_WIDTH, TBC_IMAGE_HEIGHT);
+		ImageBuilder imageBuilder1 = new ImageBuilder(this, tbcBriRem, "briRem");
+		imageBuilder1.buildImage();
+		
+		getResultantImage().show();
+		System.out.println("DONE");
+		//----------REMOVED BRIGHT PIXELS----------//
+		
+		//----------REMOVING BACKGROUNDS----------//
 		BackgroundRemoval bgRm = new BackgroundRemoval(this);
 		
-		double[][] bgRmTBC = bgRm.backgroundRemove(getTBCImage(), TBC_IMAGE_WIDTH, TBC_IMAGE_HEIGHT);
+		System.out.println("Removing background from classifier image");
+		double[][] classiBackRem = bgRm.backgroundRemove(classiImageBriRem, IMAGE_WIDTH, IMAGE_HEIGHT);
+		ImageBuilder imageBuilder2 = new ImageBuilder(this, classiBackRem, "bgRem");
+		imageBuilder2.buildImage();
 		
-		setTBCImage(bgRmTBC);
+		getResultantImage().show();
+		System.out.println("DONE");
 		
-		double[][] readImage = extractVals(getReadImage(), IMAGE_WIDTH, IMAGE_HEIGHT);
+		System.out.println("Removing background from image to be classified");
+		double[][] tbcBackRem = bgRm.backgroundRemove(tbcBriRem, TBC_IMAGE_WIDTH, TBC_IMAGE_HEIGHT);
+		ImageBuilder imageBuilder3 = new ImageBuilder(this, tbcBackRem, "bgRem");
+		imageBuilder3.buildImage();
 		
-		double[][] bgRmReadImage = bgRm.backgroundRemove(readImage, IMAGE_WIDTH, IMAGE_HEIGHT);
+		getResultantImage().show();
+		System.out.println("DONE");
+		//----------REMOVED BACKGROUNDS----------//
 		
+		//----------LINEARISING----------//
+		System.out.println("Linearising classifier Image");
+		double[][] classiLinear = Linearise.linearise(classiBackRem, IMAGE_WIDTH, IMAGE_HEIGHT);
+		ImageBuilder imageBuilder4 = new ImageBuilder(this, classiLinear, "linear");
+		imageBuilder4.buildImage();
+		
+		getResultantImage().show();
+		System.out.println("DONE");
+		
+		System.out.println("Linearising background Image");
+		double[][] tbcLinear = Linearise.linearise(tbcBackRem, TBC_IMAGE_WIDTH, TBC_IMAGE_HEIGHT);
+		ImageBuilder imageBuilder5 = new ImageBuilder(this, tbcLinear, "linear");
+		imageBuilder5.buildImage();
+		
+		getResultantImage().show();
+		System.out.println("DONE");
+		//----------DONE LINEARISING----------//
+		
+		//----------SETTING CLEANED VALUES----------//
 		for(int y = 0; y < IMAGE_HEIGHT; y++){
 			for(int x = 0; x < IMAGE_WIDTH; x++){
-				getReadImage()[x][y].setValue(bgRmReadImage[x][y]);
+				getReadImage()[x][y].setValue(classiLinear[x][y]);
 			}
 		}
+		
+		setTBCImage(tbcLinear);
+		//----------DONE SETTING CLEANED VALUES----------//
+		
+		//----------ESTABLISHING CLASSIFIER----------//
+		System.out.println("Establishing classifier");
 		
 		Classifier classifier = new Classifier(this);
 		classifier.calculateMeans();
@@ -150,90 +206,34 @@ public class Caller {
 		System.out.println("Covar done");
 		classifier.calcDetInv();
 		System.out.println("Inverses and determinants done");
+		System.out.println("Done establishing classifier");
+		//----------DONE ESTABLISHING CLASSIFIER----------//
 		
+		//----------PREDICTING CLASSES----------//
+		System.out.println("Classifying points");
 		int step = getNeighbours()/2;
 		double[][] predClasses = new double[TBC_IMAGE_WIDTH][TBC_IMAGE_HEIGHT];
 		
 		for(int heightP = 0 + step; heightP  < TBC_IMAGE_HEIGHT - step; heightP ++){
 			for(int widthP = 0 + step; widthP < TBC_IMAGE_WIDTH - step; widthP++){
 				double[] val = getVal(getTBCImage(), widthP, heightP);
-				predClasses[widthP][heightP] = classifier.predictedClass(val);
+				predClasses[widthP][heightP] = classifier.predictedClass(val, widthP, heightP);
 			}
 		}
 		System.out.println("Classified points");
+		//----------DONE PREDICTING CLASSES----------//
+		
+		//----------BUILDING IMAGE----------//
+		System.out.println("Building image");
 		setTBCImage(predClasses);
 		
-		ImageBuilder imageBuilder = new ImageBuilder(this, predClasses);
+		ImageBuilder imageBuilder = new ImageBuilder(this, predClasses, "threshold");
 		imageBuilder.buildImage();
 		
 		getResultantImage().show();
-//		double[][] tbcLinear = new double[TBC_IMAGE_WIDTH][TBC_IMAGE_HEIGHT];
-//		
-//		setTBCImageLinear(tbcLinear);
-//		
-//		double[][] currWindow = new double[getWindowWidth()][getWindowHeight()];
-//		
-//		for(int xWindow = 0; xWindow < getWindowXNumber(); xWindow++){
-//			for(int yWindow = 0; yWindow < getWindowYNumber(); yWindow++){
-//				int windowXStart = windowStartPix(getWindowWidth(), xWindow);
-//				int windowXEnd = windowEndPix(getWindowWidth(), xWindow);
-//				
-//				int windowYStart = windowStartPix(getWindowHeight(), yWindow);
-//				int windowYEnd = windowEndPix(getWindowHeight(), yWindow);
-//				
-//				currWindow = windowVals(windowXStart,windowXEnd,windowYStart,windowYEnd);
-//				
-//				currWindow = linearStretchedWindow(currWindow, getWindowWidth(), getWindowHeight());
-//				
-//				updateTBC(getTBCImageLinear(), currWindow, windowXStart, windowXEnd, windowYStart, windowYEnd);
-//			}
-//		}
-//		
-//		System.out.println("Stretched image");
-		
+		System.out.println("Done building image");
+		//----------DONE BUILDING IMAGE----------//
 
-	}
-
-	private int windowStartPix(int length, int window){
-		return (length - (getNeighbours() - 1)) * window;
-	}
-	
-	private int windowEndPix(int length, int window){
-		return ((length - (getNeighbours() - 1)) * (window + 1)) + (getNeighbours() - 1);
-	}
-	
-	private double[][] windowVals(int xStart, int xEnd, int yStart, int yEnd){
-		double[][] currWindow = new double[getWindowWidth()][getWindowHeight()];
-		int currWinX = 0;
-		int currWinY = 0;
-
-		for(int y = yStart; y<yEnd; y++){
-			for(int x = xStart; x < xEnd; x++){
-				currWindow[currWinX][currWinY] = getTBCImage()[x][y];
-				currWinX++;
-			}
-			currWinX = 0;
-			currWinY++;
-		}
-		
-		return currWindow;
-	}
-	
-	private void updateTBC(double[][] tbc, double[][] currWindow, int xStart, int xEnd, int yStart, int yEnd){
-		int step = (getNeighbours() - 1)/2;
-		
-		int currWinX = step;
-		int currWinY = step;
-		
-		
-		for(int y = yStart + step; y < yEnd - step; y++){
-			for(int x = xStart + step; x < xEnd - step; x++){
-				tbc[x][y] = currWindow[currWinX][currWinY];
-				currWinX++;
-			}
-			currWinX = step;
-			currWinY++;
-		}
 	}
 	
 	public void callValidation(){
@@ -259,7 +259,7 @@ public class Caller {
 				double[][] values = extractVals(getReadImage(), IMAGE_WIDTH, IMAGE_HEIGHT);
 				
 				double[] val = getVal(values, widthP, heightP);
-				double predClass = classifier.predictedClass(val);
+				double predClass = classifier.predictedClass(val, widthP, heightP);
 				
 				String maskVal = getReadImage()[widthP][heightP].getMaskVal();				
 				if(predClass == 1 && maskVal.equals("foreground")){
@@ -321,33 +321,4 @@ public class Caller {
 		return retVal;
 	}
 	
-	private static double[][] linearStretchedWindow(double[][] windowVal, int width, int height){
-		double[][] returnValues = new double[width][height];
-		double brightest = -1;
-		double darkest = -1;
-		double h;
-
-		for(int heightP = 0; heightP < height; heightP++){
-			for(int widthP = 0; widthP < width; widthP++){
-				h = windowVal[widthP][heightP];
-				if(brightest == -1 || brightest < h){
-					brightest = h;
-				}
-				
-				if(darkest == -1 || darkest > h){
-					darkest = h;
-				}
-				
-				returnValues[widthP][heightP] = h;
-			}
-		}
-		
-		for(int heightP = 0; heightP < height; heightP++){
-			for(int widthP = 0; widthP < width; widthP++){
-				returnValues[widthP][heightP] = Reader.linearStretch(returnValues[widthP][heightP], darkest, brightest);
-			}
-		}
-		
-		return returnValues;
-	}
 }

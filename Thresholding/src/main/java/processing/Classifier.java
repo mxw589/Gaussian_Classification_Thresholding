@@ -17,9 +17,11 @@ public class Classifier {
 	private boolean validation;
 	private PixelPos valiPixel;
 	private RealMatrix fgMeanCVec;
+	private RealMatrix fgCovar;
 	private RealMatrix fgCovarInv;
 	private double fgCovarDet;
 	private RealMatrix bgMeanCVec;
+	private RealMatrix bgCovar;
 	private RealMatrix bgCovarInv;
 	private double bgCovarDet;
 	double bgCount;
@@ -131,6 +133,22 @@ public class Classifier {
 
 	public void setBgCovarDet(double bgCovarDet) {
 		this.bgCovarDet = bgCovarDet;
+	}
+
+	public RealMatrix getFgCovar() {
+		return fgCovar;
+	}
+
+	public void setFgCovar(RealMatrix fgCovar) {
+		this.fgCovar = fgCovar;
+	}
+
+	public RealMatrix getBgCovar() {
+		return bgCovar;
+	}
+
+	public void setBgCovar(RealMatrix bgCovar) {
+		this.bgCovar = bgCovar;
 	}
 
 	public void calculateMeans(){
@@ -332,6 +350,7 @@ public class Classifier {
 	public void calcDetInv(){
 		int nSq = getCaller().getNeighbours() * getCaller().getNeighbours();
 		RealMatrix covarMatrix = new Array2DRowRealMatrix(getFgCovariance());
+		setFgCovar(covarMatrix);
 		LUDecomposition ludecomp = new LUDecomposition(covarMatrix);
 //		System.out.println(covarMatrix.getColumnDimension() + ", " + covarMatrix.getRowDimension());
 //		System.out.println(covarMatrix);
@@ -352,6 +371,7 @@ public class Classifier {
 		setFgMeanCVec(meanCVec);
 		
 		covarMatrix = new Array2DRowRealMatrix(getBgCovariance());
+		setBgCovar(covarMatrix);
 		ludecomp = new LUDecomposition(covarMatrix);
 //		System.out.println(covarMatrix.getColumnDimension() + ", " + covarMatrix.getRowDimension());
 //		System.out.println(covarMatrix);
@@ -372,7 +392,7 @@ public class Classifier {
 		setBgMeanCVec(meanCVec);
 	}
 	
-	public double PXGivenH(RealMatrix meanCVec, RealMatrix covarInv, double covarDet, double[] val){
+	public double PXGivenH(RealMatrix meanCVec, RealMatrix covarInv, RealMatrix covar, double covarDet, double[] val, int x, int y){
 		int nSq = getCaller().getNeighbours() * getCaller().getNeighbours();
 
 		
@@ -381,21 +401,28 @@ public class Classifier {
 		
 		RealMatrix valMinusMean = valCVec.subtract(meanCVec);
 
-//		System.out.println("valCVec: "+valCVec);
-//		System.out.println("meanCVec: "+meanCVec);
-//		System.out.println("valMinusMean"+valMinusMean);
-//		System.out.println("covarInv:"+covarInv);
-//		System.out.println("covarDet:"+covarDet);
-//		System.out.println("first part:" + (1/Math.sqrt(Math.pow(2*Math.PI, nSq)*covarDet)));
-//		System.out.println("second part:" + (((valMinusMean.transpose()).multiply(covarInv)).multiply(valMinusMean).getEntry(0, 0)));
+//		if(x > 540 && x < 590){
+//			if(y > 160 && y < 200){
+//				System.out.print("(" + x + "," + y + ") ");
+//				System.out.println(" valCVec: "+valCVec);
+//				System.out.println(" meanCVec: "+meanCVec);
+//				System.out.println(" valMinusMean: "+valMinusMean);
+//				System.out.println(" covar: "+ covar);
+//				System.out.println(" covarInv: "+covarInv);
+//				System.out.println(" covarDet: "+covarDet);
+//				System.out.println(" first part: " + (1/Math.sqrt(Math.pow(2*Math.PI, nSq)*covarDet)));
+//				System.out.println(" second part: " + (((valMinusMean.transpose()).multiply(covarInv)).multiply(valMinusMean).getEntry(0, 0)));
+//			}
+//		}
 		return (1/Math.sqrt(Math.pow(2*Math.PI, nSq)*covarDet)) * Math.exp(-0.5 * ((valMinusMean.transpose()).multiply(covarInv)).multiply(valMinusMean).getEntry(0, 0));
 	}
 	
-	public double predictedClass(double[] val){
+	public double predictedClass(double[] val, int x, int y){
 		double pClass;
-		
-		double pForeground = PXGivenH(getFgMeanCVec(), getFgCovarInv(), getFgCovarDet(), val);
-		double pBackground = PXGivenH(getBgMeanCVec(), getBgCovarInv(), getBgCovarDet(), val);
+//		System.out.println(" fg: ");
+		double pForeground = PXGivenH(getFgMeanCVec(), getFgCovarInv(), getFgCovar(), getFgCovarDet(), val, x, y);
+//		System.out.println(" bg: ");
+		double pBackground = PXGivenH(getBgMeanCVec(), getBgCovarInv(), getBgCovar(), getBgCovarDet(), val, x, y);
 //		System.out.println("pForeground:"+pForeground);
 //		System.out.println("pBackground:"+pBackground);
 		
@@ -409,9 +436,18 @@ public class Classifier {
 		double fgFinal = pForeground * pFG;
 		double bgFinal = pBackground * pBG;
 		
-		
-//		System.out.println("fgFinal: " + fgFinal);
-//		System.out.println("bgFinal: " + bgFinal);
+		if(x > 540 && x < 590){
+			if(y > 160 && y < 200){
+				System.out.print(" pForeground: "+pForeground);
+				System.out.print(" pBackground: "+pBackground);
+				System.out.print(" pFG: "+pFG);
+				System.out.print(" pBG: "+pBG);
+				
+				System.out.print(" fgFinal: " + fgFinal);
+				System.out.println(" bgFinal: " + bgFinal);
+			}
+		}
+
 		if(fgFinal > bgFinal){
 			pClass = 1;
 		} else {

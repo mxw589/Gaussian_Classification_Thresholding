@@ -77,13 +77,13 @@ public class ThresholdingPlugin implements PlugIn{
 	public static void main(String[] args) {
 		new ImageJ();
 		
-		ImagePlus image0 = IJ.openImage("/Users/Mark/Documents/Project/Test_Images/BMP/6_FITC-sample-8-bit.tif");
+		ImagePlus image0 = IJ.openImage("/Users/Mark/Documents/Project/Images/1_FITC.tif");
 	    image0.show();
-	    ImagePlus image1 = IJ.openImage("/Users/Mark/Documents/Project/Images/5_ConA.tif");
+	    ImagePlus image1 = IJ.openImage("/Users/Mark/Documents/Project/Images/1_FITC-mask.tif");
 	    image1.show();
-	    ImagePlus image2 = IJ.openImage("/Users/Mark/Documents/Project/Images/6_FITC.tif");
+	    ImagePlus image2 = IJ.openImage("/Users/Mark/Documents/Project/Images/2_FITC.tif");
 	    image2.show();
-	    ImagePlus image3 = IJ.openImage("/Users/Mark/Documents/Project/Test_Images/BMP/6_FITC-mask.tif");
+	    ImagePlus image3 = IJ.openImage("/Users/Mark/Documents/Project/Images/3_FITC.tif");
 	    image3.show();
 	    
 	    IJ.runPlugIn("ThresholdingPlugin", "");

@@ -8,10 +8,12 @@ public class ImageBuilder {
 	Caller caller;
 	ShortProcessor sp;
 	double[][] predClasses;
+	String title;
 	
-	public ImageBuilder(Caller caller, double[][] predClasses){
+	public ImageBuilder(Caller caller, double[][] predClasses, String title){
 		this.caller = caller;
 		this.predClasses = predClasses;
+		this.title = title;
 	}
 	
 	public ShortProcessor getSp() {
@@ -32,6 +34,10 @@ public class ImageBuilder {
 
 	public Caller getCaller() {
 		return caller;
+	}
+
+	public String getTitle() {
+		return title;
 	}
 
 	public void buildImage(){
@@ -55,7 +61,7 @@ public class ImageBuilder {
 			title = title.substring(0, index);				
 		}
 		
-		ImagePlus imageTHApplied = new ImagePlus(title + "-threshold" + ext, sp);
+		ImagePlus imageTHApplied = new ImagePlus(title + "-" + getTitle() + ext, sp);
 		imageTHApplied.setCalibration(getCaller().getTBCImg().getCalibration());
 		
 		getCaller().setResultantImage(imageTHApplied);

@@ -28,7 +28,7 @@ public class BackgroundRemoval {
 		this.structuringElement = structuringElement;
 	}
 	
-	public void buildSE(){
+	private void buildSE(){
 		int radius = getCaller().getElementRadius();
 		
 		Set<PixelPos> structuringElement = new HashSet<PixelPos>();

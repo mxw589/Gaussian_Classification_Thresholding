@@ -114,9 +114,5 @@ public class Reader {
 		
 		return pixelsValues;
 	}
-	
-	public static double linearStretch(double val, double dimmest, double brightest){
-		return (val - dimmest) * (255.0 / (brightest - dimmest));
-	}
 
 }

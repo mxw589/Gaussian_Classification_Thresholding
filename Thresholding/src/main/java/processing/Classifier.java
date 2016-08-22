@@ -159,7 +159,7 @@ public class Classifier {
 
 		int step = getCaller().getNeighbours()/2;
 
-
+//		System.out.println("(0,0):");
 		for(int heightP = 0 + step; heightP  < getCaller().IMAGE_HEIGHT - step; heightP ++){
 			for(int widthP = 0 + step; widthP < getCaller().IMAGE_WIDTH - step; widthP++){
 				if(!isValidation() || heightP != getValiPixel().getY() || widthP != getValiPixel().getX()){
@@ -331,17 +331,18 @@ public class Classifier {
 		PixelsValues[][] readImage = getCaller().getReadImage();
 		
 		int adjust = getCaller().getNeighbours() / 2;
-
+		
 		for(int windowY = 0; windowY < getCaller().getNeighbours(); windowY++){
 			for(int windowX = 0; windowX < getCaller().getNeighbours(); windowX++){
 				totals[windowX][windowY] += readImage[x + windowX - adjust][y + windowY - adjust].getValue();
 				
 //				//Debugging
-//				if(windowY ==0 && windowX == 0){
-//					System.out.println("TL:" + readImage[x + windowX - adjust][y + windowY - adjust].getValue());
+//				if(windowY ==0 && windowX == 0 && test.equals("fg:")){
+//					System.out.print(readImage[x + windowX - adjust][y + windowY - adjust].getValue());
+//					System.out.print(",");
 //				}
 //				if(windowY ==0 && windowX == 1){
-//					System.out.println("TM:" + readImage[x + windowX - adjust][y + windowY - adjust].getValue());
+//					System.out.println("(" + (x + windowX - adjust) + "," +(y + windowY - adjust)+ ")"+"TM:" + readImage[x + windowX - adjust][y + windowY - adjust].getValue());
 //				}
 			}
 		}
@@ -351,6 +352,7 @@ public class Classifier {
 		int nSq = getCaller().getNeighbours() * getCaller().getNeighbours();
 		RealMatrix covarMatrix = new Array2DRowRealMatrix(getFgCovariance());
 		setFgCovar(covarMatrix);
+//		System.out.println(covarMatrix);
 		LUDecomposition ludecomp = new LUDecomposition(covarMatrix);
 //		System.out.println(covarMatrix.getColumnDimension() + ", " + covarMatrix.getRowDimension());
 //		System.out.println(covarMatrix);
@@ -410,18 +412,26 @@ public class Classifier {
 //				System.out.println(" covar: "+ covar);
 //				System.out.println(" covarInv: "+covarInv);
 //				System.out.println(" covarDet: "+covarDet);
-//				System.out.println(" first part: " + (1/Math.sqrt(Math.pow(2*Math.PI, nSq)*covarDet)));
+//				System.out.println(" first part: " + (1/(Math.sqrt(Math.pow(2*Math.PI, nSq)*covarDet))));
 //				System.out.println(" second part: " + (((valMinusMean.transpose()).multiply(covarInv)).multiply(valMinusMean).getEntry(0, 0)));
 //			}
 //		}
-		return (1/Math.sqrt(Math.pow(2*Math.PI, nSq)*covarDet)) * Math.exp(-0.5 * ((valMinusMean.transpose()).multiply(covarInv)).multiply(valMinusMean).getEntry(0, 0));
+		return (1/(Math.sqrt(Math.pow(2*Math.PI, nSq)*covarDet))) * Math.exp(-0.5 * ((valMinusMean.transpose()).multiply(covarInv)).multiply(valMinusMean).getEntry(0, 0));
 	}
 	
 	public double predictedClass(double[] val, int x, int y){
 		double pClass;
+//		if(x > 540 && x < 590){
+//			if(y > 160 && y < 200){
 //		System.out.println(" fg: ");
+//			}
+//		}
 		double pForeground = PXGivenH(getFgMeanCVec(), getFgCovarInv(), getFgCovar(), getFgCovarDet(), val, x, y);
+//		if(x > 540 && x < 590){
+//			if(y > 160 && y < 200){
 //		System.out.println(" bg: ");
+//			}
+//		}
 		double pBackground = PXGivenH(getBgMeanCVec(), getBgCovarInv(), getBgCovar(), getBgCovarDet(), val, x, y);
 //		System.out.println("pForeground:"+pForeground);
 //		System.out.println("pBackground:"+pBackground);
@@ -436,20 +446,20 @@ public class Classifier {
 		double fgFinal = pForeground * pFG;
 		double bgFinal = pBackground * pBG;
 		
-		if(x > 540 && x < 590){
-			if(y > 160 && y < 200){
-				System.out.print(" pForeground: "+pForeground);
-				System.out.print(" pBackground: "+pBackground);
-				System.out.print(" pFG: "+pFG);
-				System.out.print(" pBG: "+pBG);
-				
-				System.out.print(" fgFinal: " + fgFinal);
-				System.out.println(" bgFinal: " + bgFinal);
-			}
-		}
+//		if(x > 540 && x < 590){
+//			if(y > 160 && y < 200){
+//				System.out.print(" pForeground: "+pForeground);
+//				System.out.print(" pBackground: "+pBackground);
+//				System.out.print(" pFG: "+pFG);
+//				System.out.print(" pBG: "+pBG);
+//				
+//				System.out.print(" fgFinal: " + fgFinal);
+//				System.out.println(" bgFinal: " + bgFinal);
+//			}
+//		}
 
 		if(fgFinal > bgFinal){
-			pClass = 1;
+			pClass = 255;
 		} else {
 			pClass = 0;
 		}

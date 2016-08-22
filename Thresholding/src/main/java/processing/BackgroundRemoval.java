@@ -50,7 +50,7 @@ public class BackgroundRemoval {
 	}
 	
 	public double[][] backgroundRemove(double[][] initialVals, int width, int height){
-		double[][] background = Opening.open(getStructuringElement(), initialVals, width, height);
+		double[][] background = Opening.open(caller, getStructuringElement(), initialVals, width, height);
 		double[][] returnVals = new double[width][height];
 				
 		for(int y = 0; y < height; y++){

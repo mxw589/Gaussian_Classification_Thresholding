@@ -42,10 +42,10 @@ public class ThresholdingPlugin implements PlugIn{
 		 */
 		GenericDialog gd = new GenericDialog("Watershed");
 		
-		gd.addChoice("Image to build classifier", imgNames, imgNames[0]);
-		gd.addChoice("Mask to build classifier", imgNames, imgNames[1]);
-		gd.addChoice("Image to threshold", imgNames, imgNames[2]);
-		gd.addNumericField("Neighbour grid size", 3, 0);
+		gd.addChoice("Image to build classifier", imgNames, imgNames[5]);
+		gd.addChoice("Mask to build classifier", imgNames, imgNames[4]);
+		gd.addChoice("Image to threshold", imgNames, imgNames[5]);
+		gd.addNumericField("Neighbour grid size", 5, 0);
 		gd.addNumericField("Structuring element radius", 15, 0);
 		gd.showDialog();
 		
@@ -77,14 +77,22 @@ public class ThresholdingPlugin implements PlugIn{
 	public static void main(String[] args) {
 		new ImageJ();
 		
+//	    ImagePlus image6 = IJ.openImage("/Users/Mark/Documents/Project/Test_Images/BMP/test.tif");
+//	    image6.show();
+//	    ImagePlus image7 = IJ.openImage("/Users/Mark/Documents/Project/Test_Images/BMP/test-mask.tif");
+//	    image7.show();
 		ImagePlus image0 = IJ.openImage("/Users/Mark/Documents/Project/Images/1_FITC.tif");
 	    image0.show();
 	    ImagePlus image1 = IJ.openImage("/Users/Mark/Documents/Project/Images/1_FITC-mask.tif");
 	    image1.show();
 	    ImagePlus image2 = IJ.openImage("/Users/Mark/Documents/Project/Images/2_FITC.tif");
 	    image2.show();
-	    ImagePlus image3 = IJ.openImage("/Users/Mark/Documents/Project/Images/3_FITC.tif");
+	    ImagePlus image3 = IJ.openImage("/Users/Mark/Documents/Project/Images/5_FITC.tif");
 	    image3.show();
+		ImagePlus image4 = IJ.openImage("/Users/Mark/Documents/Project/Test_Images/BMP/6_FITC-mask.tif");
+	    image4.show();
+	    ImagePlus image5 = IJ.openImage("/Users/Mark/Documents/Project/Images/6_FITC.tif");
+	    image5.show();
 	    
 	    IJ.runPlugIn("ThresholdingPlugin", "");
 	}

@@ -194,6 +194,7 @@ public class Caller {
 		}
 		
 		setTBCImage(tbcLinear);
+		
 		//----------DONE SETTING CLEANED VALUES----------//
 		
 		//----------ESTABLISHING CLASSIFIER----------//

@@ -5,7 +5,13 @@ import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import processing.Caller;
-
+/**
+ * Class that initialises the plugin. Establishes the GUI elements for
+ * ImageJ and also contains a main method for execution in Eclipse for
+ * debugging purposes
+ * @author Mark
+ *
+ */
 public class ThresholdingPlugin implements PlugIn{
 
 	/**
@@ -24,7 +30,7 @@ public class ThresholdingPlugin implements PlugIn{
 		 */
 		if( imgCount < 2 ){
 			IJ.error( "WaterShed Test", 
-					"ERROR: At least two images needs to be open to run a watershed.");
+					"ERROR: At least two images needs to be open to run a threshold.");
 			return;
 		}
 		
@@ -42,11 +48,11 @@ public class ThresholdingPlugin implements PlugIn{
 		 */
 		GenericDialog gd = new GenericDialog("Watershed");
 		
-		gd.addChoice("Image to build classifier", imgNames, imgNames[5]);
-		gd.addChoice("Mask to build classifier", imgNames, imgNames[4]);
-		gd.addChoice("Image to threshold", imgNames, imgNames[5]);
-		gd.addNumericField("Neighbour grid size", 5, 0);
-		gd.addNumericField("Structuring element radius", 15, 0);
+		gd.addChoice("Image to build classifier", imgNames, imgNames[0]);
+		gd.addChoice("Mask to build classifier", imgNames, imgNames[1]);
+		gd.addChoice("Image to threshold", imgNames, imgNames[0]);
+		gd.addNumericField("Classifier structuring element width and height", 5, 0);
+		gd.addNumericField("Top-hat structuring element radius", 25, 0);
 		gd.showDialog();
 		
 		if(gd.wasOKed()){
@@ -61,7 +67,16 @@ public class ThresholdingPlugin implements PlugIn{
 //			result.show();
 		}
 	}
-	
+	/**
+	 * Creates the caller object that will initialise the process of
+	 * the image processing
+	 * @param image the training image
+	 * @param mask the binary mask for the training image
+	 * @param TBCImg the image to be classified
+	 * @param neighbours the nxn size of the classifier structuring element
+	 * @param radius the radius to be used in the top hat transform
+	 * @return the image formed as a result of the classification
+	 */
 	public ImagePlus process(ImagePlus image, ImagePlus mask, ImagePlus TBCImg, int neighbours,int radius){
 		Caller caller = new Caller(image, mask, TBCImg, neighbours,radius);
 		
@@ -87,6 +102,10 @@ public class ThresholdingPlugin implements PlugIn{
 	    image1.show();
 	    ImagePlus image2 = IJ.openImage("/Users/Mark/Documents/Project/Images/2_FITC.tif");
 	    image2.show();
+	    ImagePlus image7 = IJ.openImage("/Users/Mark/Documents/Project/Images/3_FITC.tif");
+	    image7.show();
+	    ImagePlus image8 = IJ.openImage("/Users/Mark/Documents/Project/Images/4_FITC.tif");
+	    image8.show();
 	    ImagePlus image3 = IJ.openImage("/Users/Mark/Documents/Project/Images/5_FITC.tif");
 	    image3.show();
 		ImagePlus image4 = IJ.openImage("/Users/Mark/Documents/Project/Test_Images/BMP/6_FITC-mask.tif");

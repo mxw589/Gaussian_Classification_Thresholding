@@ -2,7 +2,11 @@ package processing;
 
 import ij.ImagePlus;
 import ij.process.ShortProcessor;
-
+/**
+ * a class that builds an image into a format that ImageJ can display
+ * @author Mark
+ *
+ */
 public class ImageBuilder {
 
 	Caller caller;
@@ -10,6 +14,13 @@ public class ImageBuilder {
 	double[][] predClasses;
 	String title;
 	
+	/**
+	 * the constructor for the class
+	 * @param caller the calling object
+	 * @param predClasses the brightness values to be present in the
+	 * constructed image
+	 * @param title the title of the image
+	 */
 	public ImageBuilder(Caller caller, double[][] predClasses, String title){
 		this.caller = caller;
 		this.predClasses = predClasses;
@@ -40,6 +51,11 @@ public class ImageBuilder {
 		return title;
 	}
 
+	/**
+	 * the method that builds the brightness into a format that ImageJ
+	 * understands. They are stored in the resultantImage variable of the
+	 * calling class
+	 */
 	public void buildImage(){
 		int width = getCaller().TBC_IMAGE_WIDTH;
 		int height = getCaller().TBC_IMAGE_HEIGHT;

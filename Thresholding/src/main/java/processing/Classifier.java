@@ -6,7 +6,15 @@ import org.apache.commons.math3.linear.RealMatrix;
 
 import datatypes.PixelPos;
 import datatypes.PixelsValues;
-
+/**
+ * this class handles the classification of pixels. It finds the
+ * means and covariance matrix of the foreground and background 
+ * in the training image as training for the classifier. It also
+ * contains the methods that apply the classifier to new images
+ * 
+ * @author Mark
+ *
+ */
 public class Classifier {
 
 	private Caller caller;
@@ -14,8 +22,6 @@ public class Classifier {
 	private double[][] bgMeans;
 	private double[][] fgCovariance;
 	private double[][] bgCovariance;
-	private boolean validation;
-	private PixelPos valiPixel;
 	private RealMatrix fgMeanCVec;
 	private RealMatrix fgCovar;
 	private RealMatrix fgCovarInv;
@@ -28,27 +34,15 @@ public class Classifier {
 	double fgCount;
 	double borderCount;
 
+	/**
+	 * the constructor for the class, all of the required variables
+	 * are held in the caller class (the training and testing image)
+	 * @param caller
+	 */
 	public Classifier(Caller caller){
 		this.caller = caller;
 		this.fgMeans = new double[caller.getNeighbours()][caller.getNeighbours()];
 		this.bgMeans = new double[caller.getNeighbours()][caller.getNeighbours()];
-		this.validation = false;
-	}
-	
-	/**
-	 * special classifier constructor for validation purposes. You are able to leave
-	 * the co-ordinate of a pixel that you want to leave out of the contruction of the
-	 * data set.
-	 * @param caller
-	 * @param x
-	 * @param y
-	 */
-	public Classifier(Caller caller, int x, int y){
-		this.caller = caller;
-		this.fgMeans = new double[caller.getNeighbours()][caller.getNeighbours()];
-		this.bgMeans = new double[caller.getNeighbours()][caller.getNeighbours()];
-		this.validation = true;
-		this.valiPixel = new PixelPos(x,y);
 	}
 
 	public double[][] getFgMeans() {
@@ -77,14 +71,6 @@ public class Classifier {
 
 	public Caller getCaller() {
 		return caller;
-	}
-	
-	public boolean isValidation() {
-		return validation;
-	}
-
-	public PixelPos getValiPixel() {
-		return valiPixel;
 	}
 
 	public RealMatrix getFgMeanCVec() {
@@ -151,6 +137,10 @@ public class Classifier {
 		this.bgCovar = bgCovar;
 	}
 
+	/**
+	 * this method calculates the means of the foreground and background
+	 * classes as part of training the classifier
+	 */
 	public void calculateMeans(){
 		PixelsValues[][] readImage = getCaller().getReadImage();
 
@@ -162,15 +152,13 @@ public class Classifier {
 //		System.out.println("(0,0):");
 		for(int heightP = 0 + step; heightP  < getCaller().IMAGE_HEIGHT - step; heightP ++){
 			for(int widthP = 0 + step; widthP < getCaller().IMAGE_WIDTH - step; widthP++){
-				if(!isValidation() || heightP != getValiPixel().getY() || widthP != getValiPixel().getX()){
-					if(readImage[widthP][heightP].getMaskVal().equals("foreground")){
-						fgCount++;
-						totalWindow(fgTotal, widthP, heightP);
-					} else if(readImage[widthP][heightP].getMaskVal().equals("background") ||
-							readImage[widthP][heightP].getMaskVal().equals("border")){
-						bgCount++;
-						totalWindow(bgTotal, widthP, heightP);
-					}
+				if(readImage[widthP][heightP].getMaskVal().equals("foreground")){
+					fgCount++;
+					totalWindow(fgTotal, widthP, heightP);
+				} else if(readImage[widthP][heightP].getMaskVal().equals("background") ||
+						readImage[widthP][heightP].getMaskVal().equals("border")){
+					bgCount++;
+					totalWindow(bgTotal, widthP, heightP);
 				}
 			}
 		}
@@ -196,6 +184,10 @@ public class Classifier {
 		}
 	}
 
+	/**
+	 * method that calculates the convariance matrix of the elements
+	 * of the structuring element as part of training the classifier
+	 */
 	public void calculateCovariance(){
 
 		double[][] fgeXeY = calcEXEY(getFgMeans());
@@ -229,6 +221,14 @@ public class Classifier {
 		setBgCovariance(bgCov);
 	}
 
+	/**
+	 * helper method for the calculation of the covariance matrix.
+	 * the covariance formula used is E[XY] - E[X]E[Y] and this
+	 * method calculates the E[X]E[Y] aspect
+	 * @param means the set of means to use in the calculation, should
+	 * either be the foreground or background means
+	 * @return a matrix that contains the E[X]E[Y] values
+	 */
 	public double[][] calcEXEY(double[][] means){
 //		System.out.println("EXEY:");
 		int nSq = getCaller().getNeighbours() * getCaller().getNeighbours();
@@ -254,6 +254,15 @@ public class Classifier {
 		return eXeY;
 	}
 
+	/**
+	 * helper method for the calculation of the covariance matrix.
+	 * the covariance formula used is E[XY] - E[X]E[Y] and this
+	 * method calculates the E[XY] aspect
+	 * @param layer a string that indicates if the foreground or
+	 * background E[XY] is being calculated. It should be either
+	 * 'foreground' or 'background'
+	 * @return a matrix of the E[XY] values
+	 */
 	public double[][] calcEXY(String layer){
 		PixelsValues[][] readImage = getCaller().getReadImage();
 
@@ -266,18 +275,16 @@ public class Classifier {
 
 		for(int heightP = 0 + step; heightP  < getCaller().IMAGE_HEIGHT - step; heightP ++){
 			for(int widthP = 0 + step; widthP < getCaller().IMAGE_WIDTH - step; widthP++){
-				if(!isValidation() || heightP != getValiPixel().getY() || widthP != getValiPixel().getX()){
-					if(layer.equals("foreground")){
-						if(readImage[widthP][heightP].getMaskVal().equals("foreground")){
-							alterCoVar(eXY, widthP, heightP);
-							setCounter++;
-						}
-					} else if(layer.equals("background")){
-						if(readImage[widthP][heightP].getMaskVal().equals("background") ||
-								readImage[widthP][heightP].getMaskVal().equals("border")){
-							alterCoVar(eXY, widthP, heightP);
-							setCounter++;
-						}
+				if(layer.equals("foreground")){
+					if(readImage[widthP][heightP].getMaskVal().equals("foreground")){
+						alterCoVar(eXY, widthP, heightP);
+						setCounter++;
+					}
+				} else if(layer.equals("background")){
+					if(readImage[widthP][heightP].getMaskVal().equals("background") ||
+							readImage[widthP][heightP].getMaskVal().equals("border")){
+						alterCoVar(eXY, widthP, heightP);
+						setCounter++;
 					}
 				}
 			}
@@ -305,6 +312,14 @@ public class Classifier {
 		return eXY;
 	}
 	
+	/**
+	 * a helper method for the calcEXY method
+	 * increases the values of the mid-calculation covariance matrix to
+	 * include the values from a given pixel position
+	 * @param covar the current covariance values
+	 * @param x the x co-ordinate of the pixel to be included
+	 * @param y the y co-ordinate of the pixel to be included
+	 */
 	public void alterCoVar(double[][] covar, int x, int y){
 		PixelsValues[][] readImage = getCaller().getReadImage();
 
@@ -327,6 +342,15 @@ public class Classifier {
 		}
 	}
 
+	/**
+	 * a helper method for the calculateMeans method
+	 * increases the values of the mid-calculation mean matrix to
+	 * include the values from a given pixel position
+	 * @param covar the current mean values
+	 * @param totals
+	 * @param x
+	 * @param y
+	 */
 	public void totalWindow(double[][] totals, int x, int y){
 		PixelsValues[][] readImage = getCaller().getReadImage();
 		
@@ -348,6 +372,11 @@ public class Classifier {
 		}
 	}
 	
+	/**
+	 * after the covariance matrix has been calculated, this method
+	 * calculates the determinant and inverse of the resultant
+	 * matrix, and stores them for use in the classification of new points
+	 */
 	public void calcDetInv(){
 		int nSq = getCaller().getNeighbours() * getCaller().getNeighbours();
 		RealMatrix covarMatrix = new Array2DRowRealMatrix(getFgCovariance());
@@ -394,6 +423,18 @@ public class Classifier {
 		setBgMeanCVec(meanCVec);
 	}
 	
+	/**
+	 * the method that executes the Gaussian classification formula
+	 * @param meanCVec the mean matrix as a column vector
+	 * @param covarInv the inverse of the convariance matrix
+	 * @param covar the convariance matrix
+	 * @param covarDet the determinant of the convariance matrix
+	 * @param val the column vector of the values that represent the pixel
+	 * to be classified
+	 * @param x the x co-ordinate of the pixel that is being classified
+	 * @param y the y co-ordinate of the pixle that is being classified
+	 * @return the probability of the pixel being in the given class
+	 */
 	public double PXGivenH(RealMatrix meanCVec, RealMatrix covarInv, RealMatrix covar, double covarDet, double[] val, int x, int y){
 		int nSq = getCaller().getNeighbours() * getCaller().getNeighbours();
 
@@ -419,6 +460,14 @@ public class Classifier {
 		return (1/(Math.sqrt(Math.pow(2*Math.PI, nSq)*covarDet))) * Math.exp(-0.5 * ((valMinusMean.transpose()).multiply(covarInv)).multiply(valMinusMean).getEntry(0, 0));
 	}
 	
+	/**
+	 * calculates the predicted class of a pixel from its structuring element
+	 * values
+	 * @param val the pixels structuring element values
+	 * @param x the x co-ordinate of the pixel
+	 * @param y the y co-ordinate of the pixel
+	 * @return the predicted class of the pixel
+	 */
 	public double predictedClass(double[] val, int x, int y){
 		double pClass;
 //		if(x > 540 && x < 590){

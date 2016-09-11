@@ -1,8 +1,14 @@
 package processing;
 
 import datatypes.PixelsValues;
+import ij.IJ;
 import ij.ImagePlus;
-
+/**
+ * This is the master class that handles the calling of all of the tasks
+ * associated with the process of thresholding
+ * @author Mark
+ *
+ */
 public class Caller {
 	
 	private ImagePlus chosenImg;
@@ -18,13 +24,18 @@ public class Caller {
 	private double[][] TBCImage;
 	private double[][] TBCImageLinear;
 	private ImagePlus resultantImage;
-	private int windowXNumber;
-	private int windowYNumber;
-	private int windowWidth;
-	private int windowHeight;
 	
-	
-	
+	/**
+	 * The method to which all of the user defined parameters for the
+	 * process are passed
+	 * @param chosenImg the training image
+	 * @param chosenMask the mask for the training image
+	 * @param TBCImg the testing image
+	 * @param neighbours the height and width of the structuring element
+	 * to be used by the classifier
+	 * @param elementRadius the radius of the structuring element to be
+	 * used in the background removal
+	 */
 	public Caller(ImagePlus chosenImg, ImagePlus chosenMask, ImagePlus TBCImg, int neighbours, int elementRadius){
 		this.chosenImg = chosenImg;
 		this.chosenMask = chosenMask;
@@ -38,18 +49,6 @@ public class Caller {
 		
 		this.TBC_IMAGE_WIDTH = TBCImg.getWidth();
 		this.TBC_IMAGE_HEIGHT = TBCImg.getHeight();
-		
-		if(neighbours == 3){
-			this.windowXNumber = 10;
-			this.windowYNumber = 6;
-			this.windowWidth = 141;
-			this.windowHeight = 175;
-		} else if(neighbours == 5){
-			this.windowXNumber = 11;
-			this.windowYNumber = 7;
-			this.windowWidth = 130;
-			this.windowHeight = 152;
-		}
 	}
 
 	public ImagePlus getChosenImg() {
@@ -99,91 +98,79 @@ public class Caller {
 	public int getNeighbours() {
 		return neighbours;
 	}
-	
-	public int getWindowXNumber() {
-		return windowXNumber;
-	}
-
-	public int getWindowYNumber() {
-		return windowYNumber;
-	}
-
-	public int getWindowWidth() {
-		return windowWidth;
-	}
-
-	public int getWindowHeight() {
-		return windowHeight;
-	}
 
 	public int getElementRadius() {
 		return elementRadius;
 	}
 
+	/**
+	 * this is the method that executes the processing of the image.
+	 * It handles the calling of all of the components of the process.
+	 */
 	public void call(){
 		Reader reader = new Reader(this);
 		reader.readClassifier();
 		reader.readTBCImage();
 		
-		System.out.println("Read images and masks");
+		IJ.log("Read images and masks");
 		
 		//----------REMOVING BRIGHT PIXELS----------//
 		double[][] classiImage = extractVals(getReadImage(), IMAGE_WIDTH, IMAGE_HEIGHT);
 		
-		System.out.println("Removing bright pixels from classifier image");
+		IJ.log("Removing bright pixels from classifier image");
 		double[][] classiImageBriRem = BrightPixelRemover.removeBrightPixel(classiImage, IMAGE_WIDTH, IMAGE_HEIGHT);
 		
-		ImageBuilder imageBuilder0 = new ImageBuilder(this, classiImageBriRem, "briRem");
-		imageBuilder0.buildImage();
+//		ImageBuilder imageBuilder0 = new ImageBuilder(this, classiImageBriRem, "briRem");
+//		imageBuilder0.buildImage();
 		
-		getResultantImage().show();
-		System.out.println("DONE");
+//		getResultantImage().show();
+		IJ.log("DONE");
 		
-		System.out.println("Removing bright pixels from image to be classified");
+		IJ.log("Removing bright pixels from image to be classified");
 		double[][] tbcBriRem = BrightPixelRemover.removeBrightPixel(getTBCImage(), TBC_IMAGE_WIDTH, TBC_IMAGE_HEIGHT);
-		ImageBuilder imageBuilder1 = new ImageBuilder(this, tbcBriRem, "briRem");
-		imageBuilder1.buildImage();
+//		ImageBuilder imageBuilder1 = new ImageBuilder(this, tbcBriRem, "briRem");
+//		imageBuilder1.buildImage();
 		
-		getResultantImage().show();
-		System.out.println("DONE");
+//		getResultantImage().show();
+		IJ.log("DONE");
 		//----------REMOVED BRIGHT PIXELS----------//
 		
 		//----------REMOVING BACKGROUNDS----------//
 		BackgroundRemoval bgRm = new BackgroundRemoval(this);
 		
-		System.out.println("Removing background from classifier image");
+		IJ.log("Removing background from classifier image");
 		double[][] classiBackRem = bgRm.backgroundRemove(classiImageBriRem, IMAGE_WIDTH, IMAGE_HEIGHT);
-		ImageBuilder imageBuilder2 = new ImageBuilder(this, classiBackRem, "bgRem");
-		imageBuilder2.buildImage();
+//		ImageBuilder imageBuilder2 = new ImageBuilder(this, classiBackRem, "bgRem");
+//		imageBuilder2.buildImage();
+//		
+//		getResultantImage().show();
+		IJ.log("DONE");
 		
-		getResultantImage().show();
-		System.out.println("DONE");
-		
-		System.out.println("Removing background from image to be classified");
+		IJ.log("Removing background from image to be classified");
 		double[][] tbcBackRem = bgRm.backgroundRemove(tbcBriRem, TBC_IMAGE_WIDTH, TBC_IMAGE_HEIGHT);
-		ImageBuilder imageBuilder3 = new ImageBuilder(this, tbcBackRem, "bgRem");
-		imageBuilder3.buildImage();
-		
-		getResultantImage().show();
-		System.out.println("DONE");
+//		ImageBuilder imageBuilder3 = new ImageBuilder(this, tbcBackRem, "bgRem");
+//		imageBuilder3.buildImage();
+//		
+//		getResultantImage().show();
+		IJ.log("DONE");
 		//----------REMOVED BACKGROUNDS----------//
 		
 		//----------LINEARISING----------//
-		System.out.println("Linearising classifier Image");
+		IJ.log("Linearising classifier Image");
 		double[][] classiLinear = Linearise.linearise(classiBackRem, IMAGE_WIDTH, IMAGE_HEIGHT);
-		ImageBuilder imageBuilder4 = new ImageBuilder(this, classiLinear, "linear");
-		imageBuilder4.buildImage();
+//		ImageBuilder imageBuilder4 = new ImageBuilder(this, classiLinear, "linear");
+//		imageBuilder4.buildImage();
+//		
+//		getResultantImage().show();
+		IJ.log("DONE");
 		
-		getResultantImage().show();
-		System.out.println("DONE");
-		
-		System.out.println("Linearising background Image");
+		IJ.log("Linearising background Image");
 		double[][] tbcLinear = Linearise.linearise(tbcBackRem, TBC_IMAGE_WIDTH, TBC_IMAGE_HEIGHT);
-		ImageBuilder imageBuilder5 = new ImageBuilder(this, tbcLinear, "linear");
-		imageBuilder5.buildImage();
-		
-		getResultantImage().show();
-		System.out.println("DONE");
+//		ImageBuilder imageBuilder5 = new ImageBuilder(this, tbcLinear, "linear");
+//		imageBuilder5.buildImage();
+//		
+//		getResultantImage().show();
+		IJ.log("DONE");
 		//----------DONE LINEARISING----------//
 		
 		//----------SETTING CLEANED VALUES----------//
@@ -198,20 +185,20 @@ public class Caller {
 		//----------DONE SETTING CLEANED VALUES----------//
 		
 		//----------ESTABLISHING CLASSIFIER----------//
-		System.out.println("Establishing classifier");
+		IJ.log("Establishing classifier");
 		
 		Classifier classifier = new Classifier(this);
 		classifier.calculateMeans();
-		System.out.println("Means done");
+		IJ.log("Means done");
 		classifier.calculateCovariance();
-		System.out.println("Covar done");
+		IJ.log("Covar done");
 		classifier.calcDetInv();
-		System.out.println("Inverses and determinants done");
-		System.out.println("Done establishing classifier");
+		IJ.log("Inverses and determinants done");
+		IJ.log("Done establishing classifier");
 		//----------DONE ESTABLISHING CLASSIFIER----------//
 		
 		//----------PREDICTING CLASSES----------//
-		System.out.println("Classifying points");
+		IJ.log("Classifying points");
 		int step = getNeighbours()/2;
 		double[][] predClasses = new double[TBC_IMAGE_WIDTH][TBC_IMAGE_HEIGHT];
 		
@@ -221,83 +208,33 @@ public class Caller {
 				predClasses[widthP][heightP] = classifier.predictedClass(val, widthP, heightP);
 			}
 		}
-		System.out.println("Classified points");
+		IJ.log("Classified points");
 		//----------DONE PREDICTING CLASSES----------//
 		
 		//----------BUILDING IMAGE----------//
-		System.out.println("Building image");
+		IJ.log("Building image");
 		setTBCImage(predClasses);
 		
 		ImageBuilder imageBuilder = new ImageBuilder(this, predClasses, "threshold");
 		imageBuilder.buildImage();
 		
 		getResultantImage().show();
-		System.out.println("Done building image");
+		IJ.log("Done building image");
 		//----------DONE BUILDING IMAGE----------//
 
 	}
-	
-	public void callValidation(){
-		Reader reader = new Reader(this);
-		reader.readClassifier();
-		
-		int step = getNeighbours()/2;
-		
-		int fgfg = 0;
-		int fgbg = 0;
-		int bgbg = 0;
-		int bgfg = 0;
-		
-		int completed = 0;
-		
-		for(int heightP = 0 + step; heightP  < IMAGE_HEIGHT - step; heightP ++){
-			for(int widthP = 0 + step; widthP < IMAGE_WIDTH - step; widthP++){
-				Classifier classifier = new Classifier(this, widthP, heightP);
-				classifier.calculateMeans();
-				classifier.calculateCovariance();
-				classifier.calcDetInv();
-				
-				double[][] values = extractVals(getReadImage(), IMAGE_WIDTH, IMAGE_HEIGHT);
-				
-				double[] val = getVal(values, widthP, heightP);
-				double predClass = classifier.predictedClass(val, widthP, heightP);
-				
-				String maskVal = getReadImage()[widthP][heightP].getMaskVal();				
-				if(predClass == 1 && maskVal.equals("foreground")){
-					fgfg++;
-				} else if (predClass == 1 && maskVal.equals("background")){
-					fgbg++;
-				} else if (predClass == 1 && maskVal.equals("border")){
-					fgbg++;
-				} else if (predClass == 0 && maskVal.equals("background")){
-					bgbg++;
-				} else if (predClass == 0 && maskVal.equals("border")){
-					bgbg++;
-				} else if (predClass == 0 && maskVal.equals("foreground")){
-					bgfg++;
-				}
-				
-				completed++;
-				if(completed%100 == 0){
-					System.out.println(completed);
-				}
-			}
-		}
-		
-		System.out.println("fgfg:" + fgfg);
-		System.out.println("bgbg:" + bgbg);
-		System.out.println("fgbg:" + fgbg);
-		System.out.println("bgfg:" + bgfg);
-		
-//		for(int windowY = 0; windowY < getNeighbours(); windowY++){
-//			for(int windowX = 0; windowX < getNeighbours(); windowX++){
-//				classifier.PXGivenH(classifier.getFgMeans(), classifier.getFgCovariance(), test);
-//				classifier.PXGivenH(classifier.getBgMeans(), classifier.getBgCovariance(), test);
-//			}
-//		}
-	}
 
-	private double[][] extractVals(PixelsValues[][] pixVals, int imgWidth, int imgHeight){
+	/**
+	 * a helper method that extracts the brightness values from an array
+	 * of PixelsValues objects
+	 * @param pixVals the array of objects from which the brightness values
+	 * are required
+	 * @param imgWidth the width of the PixelsValues array
+	 * @param imgHeight the height of the PixelsValues array
+	 * @return the double array that contains the brightness values of the
+	 * image
+	 */
+	private static double[][] extractVals(PixelsValues[][] pixVals, int imgWidth, int imgHeight){
 		double[][] values = new double[imgWidth][imgHeight];
 		
 		for(int y = 0; y < imgHeight; y++){
@@ -309,6 +246,15 @@ public class Caller {
 		return values;
 	}
 	
+	/**
+	 * a helper method for the call method. Receives a 2D array of
+	 * brightness values from the testing image, and returns them in a 
+	 * vector in the order required for classification of that pixel
+	 * @param values the 2D array of values 
+	 * @param widthP the x co-ordinate of the pixel to be classified
+	 * @param heightP the y co-ordinate of the pixel to be classified
+	 * @return the vector of values to be used by the classifier
+	 */
 	private double[] getVal(double[][] values, int widthP, int heightP) {
 		double[] retVal = new double[getNeighbours()*getNeighbours()];
 		

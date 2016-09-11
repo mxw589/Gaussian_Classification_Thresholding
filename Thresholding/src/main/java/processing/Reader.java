@@ -4,7 +4,13 @@ import datatypes.PixelPos;
 import datatypes.PixelsValues;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
-
+/**
+ * the class that reads in the relevant information from
+ * ImageJ ImageProcessor objects to a format that the rest
+ * of the process understands
+ * @author Mark
+ *
+ */
 public class Reader {
 	
 	private Caller caller;
@@ -12,6 +18,11 @@ public class Reader {
 	private ImageProcessor chosenMask;
 	private ImageProcessor TBCImage;
 	
+	/**
+	 * constructor for the class, retrieves the ImageProcessor objects
+	 * from the calling class
+	 * @param caller
+	 */
 	public Reader(Caller caller){
 		this.caller = caller;
 		this.chosenImg = caller.getChosenImg().getProcessor();
@@ -90,6 +101,9 @@ public class Reader {
 		
 	}
 	
+	/**
+	 * reads in the image to be classified
+	 */
 	public void readTBCImage(){
 		int width = getCaller().TBC_IMAGE_WIDTH;
 		int height = getCaller().TBC_IMAGE_HEIGHT;
@@ -99,6 +113,14 @@ public class Reader {
 		getCaller().setTBCImage(pixelsValues);
 	}
 	
+	/**
+	 * helper method for the readTBCImage method.
+	 * @param width the width of the image to be read in
+	 * @param height the height of the image to be read in
+	 * @param image the ImageProcessor object that represent the image to be
+	 * read in
+	 * @return the brightness values of the given image in double format
+	 */
 	private static double[][] readImage(int width, int height, ImageProcessor image){
 		
 		double[][] pixelsValues = new double[width][height];

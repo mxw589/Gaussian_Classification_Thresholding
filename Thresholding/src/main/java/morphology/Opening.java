@@ -8,9 +8,26 @@ import java.util.concurrent.TimeUnit;
 import datatypes.PixelPos;
 import processing.Caller;
 import processing.ImageBuilder;
-
+/**
+ * This class contains the static methods that perform the morphological opening
+ * of an image to be used in a top hat transform
+ * @author Mark
+ *
+ */
 public class Opening {
 
+	/**
+	 * the static method that performs the opening of an image by establishing
+	 * threadpools that handle erosion and dilation tasks for individual pixels
+	 * @param caller the object that called the method
+	 * @param structuringElement the set of relative pixel positions that define
+	 * the structure of the structuring element to be used in the
+	 * opening
+	 * @param image the image to be opened
+	 * @param width the width of the image to be opened
+	 * @param height the height of the image to be opened
+	 * @return the result of the morphological opening
+	 */
 	public static double[][] open(Caller caller, Set<PixelPos> structuringElement, double[][] image, int width, int height){
 		
 		ExecutorService erosionTaskExecutor = Executors.newFixedThreadPool(4);
